@@ -5,6 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langchain.chat_models import init_chat_model
 from tools.make_quiz import make_quiz
 from tools.search_pdfs import search_pdfs
+from tools.tracker import log_quiz_result, get_weak_topics
 
 load_dotenv()
 
@@ -17,7 +18,8 @@ When the student asks to be quizzed, call make_quiz.
 Ask exactly ONE question, then stop and wait for the answer.
 Never write the answer or the next question in the same message.
 After the student answers, say if it was correct, explain briefly and cite the page, then ask the next question and stop.
-At the end, cite the source like (file name, page).
+At the end, cite the source like (file name, page).After grading each quiz answer, call log_quiz_result with a short lowercase topic name (like "embeddings").
+When the student asks what to review, call get_weak_topics and explain the result simply.
 If the PDFs do not contain the answer, say so. Do not guess."""
 
 
@@ -25,7 +27,7 @@ def build_agent():
     model = init_chat_model("groq:openai/gpt-oss-120b")
     return create_agent(
         model=model,
-        tools=[search_pdfs, make_quiz],
+        tools=[search_pdfs, make_quiz,log_quiz_result, get_weak_topics],
         system_prompt=SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
     )
