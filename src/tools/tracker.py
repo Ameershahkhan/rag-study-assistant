@@ -1,6 +1,6 @@
 from langchain.tools import tool
 
-from db import get_connection
+from db import get_connection, fetch_weak_topics
 
 
 @tool
@@ -15,21 +15,11 @@ def log_quiz_result(topic: str, question: str, correct: bool, source: str = "") 
         )
     return "Result saved."
 
-
 @tool
 def get_weak_topics() -> str:
     """Show the topics the student struggles with most, based on past quizzes.
     Use this when the student asks what to review or what they are weak at."""
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT topic, COUNT(*) AS total, SUM(correct) AS right
-            FROM quiz_results
-            GROUP BY topic
-            ORDER BY 1.0 * SUM(correct) / COUNT(*) ASC, total DESC
-            LIMIT 5
-            """
-        ).fetchall()
+    rows = fetch_weak_topics()
     if not rows:
         return "No quiz results yet."
-    return "\n".join(f"{topic}: {right}/{total} correct" for topic, total, right in rows)
+    return "\n".join(f"{topic}: {n}/{total} correct" for topic, total, n in rows)
